@@ -1,43 +1,93 @@
 import numpy as np
+import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
+import argparse
 
 
+#Data processing 
+filename1 = "Answers.txt"
+filename2 = "Questions.txt"
 
-    filename1 = "amazon_cells_labelled.txt"
-    filename2 = "amazon_cells_labelled.txt"
-    filename3 = "yelp_labelled.txt"
-    df1 = pd.read_csv(filename1, sep="\t", names=["docs", "class"]) 
-    df2 = pd.read_csv(filename2, sep="\t", names=["docs", "class"])
-    df3 = pd.read_csv(filename3, sep="\t", names=["docs", "class"])
-    
+f =  open(filename2)
+f2 =  open(filename1)
+
+
+q_list = []
+a_list =[]
+
+for i in f:
+    q_list.append(i)
+
+for j in f2:
+    a_list.append(j)
+
+def argument():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('question', help='ask')
+    parser = parser.parse_args()
+
+    return parser
+
+
 def cos_sim(a, b):
-	"""Takes 2 vectors a, b and returns the cosine similarity according 
+    """Takes 2 vectors a, b and returns the cosine similarity according 
 	to the definition of the dot product
 	"""
-	dot_product = np.dot(a, b)
-	norm_a = np.linalg.norm(a)
-	norm_b = np.linalg.norm(b)
-	return dot_product / (norm_a * norm_b)
+    dot_product = np.dot(a, b)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    a = dot_product / (norm_a * norm_b)
+    return a
+    
 
-count_vect = CountVectorizer()
-counts = count_vect.fit_transform(dataset)
+# print(df2)  
 
-vectorized = counts.toarray()
+def main():
+    #Taking argument on command line using test question
+    args = argument()
+    quest = args.question
+    test_question =[quest]
 
-sentence1 = np.array(vectorized[0]) 
-sentence2 = np.array(vectorized[1])
-sentence3 = np.array(vectorized[2])
-sentence4 = np.array(vectorized[3])
-sentence5 = np.array(vectorized[4])
-sentence6 = np.array(vectorized[5])
+    #vectorizing test question
+    count_vect = CountVectorizer()
+    counts = count_vect.fit_transform(q_list)
+
+    counts2 = count_vect.transform(test_question)
+
+    vectorized = counts.toarray()
+    vectorized2 = counts2.toarray()
+
+    arrays = []
+    for i in range(len(q_list)):
+        arrays.append(np.array(vectorized[i]))
+
+    output = []
+
+    results = np.zeros((len(q_list),len(q_list)))
+    max_val = 0
+    cors_ans_index = 0
+
+    #calculating the most similar vector
+    for i in range(len(q_list)):
+        if max_val < cos_sim(arrays[i], np.array(vectorized2[0])):
+            max_val = cos_sim(arrays[i], np.array(vectorized2[0]))
+            sim_sent = vectorized[i]
+            cors_ans_index = i
+    
+
+    
+    print("Expected Answer: ")
+    print(a_list[cors_ans_index])
+
+if __name__=="__main__":
+    main()
 
 
-arrays = [sentence1, sentence2, sentence3, sentence4, sentence5, sentence6]
-output = []
-for i in range(len(arrays)):
-    inner = []
-    for j in range(len(arrays)):
-        inner.append(cos_sim(arrays[i], arrays[j]))
-    output.append(inner)
 
-print(np.array(output), file=open('ouput.txt', 'a'))
+
+
+
+
+    
+
+
